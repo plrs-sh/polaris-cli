@@ -1,0 +1,58 @@
+name: Publish staged CLI release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Validate staged release and publish immutable assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          version="${GITHUB_REF_NAME#v}"
+          test "$(jq -r .version release/manifest.json)" = "$version"
+          (cd release && sha256sum --check checksums.txt)
+          expected_assets="$(find release -maxdepth 1 -type f -printf '%f\n' | LC_ALL=C sort)"
+          releases="$(gh api --paginate --slurp "repos/${GITHUB_REPOSITORY}/releases?per_page=100")"
+          release_json="$(jq -c --arg tag "$GITHUB_REF_NAME" \
+            'map(.[]) | map(select(.tag_name == $tag)) | first // empty' <<<"$releases")"
+          if [[ -n "$release_json" && "$(jq -r .draft <<<"$release_json")" == "false" ]]; then
+            actual_assets="$(jq -r '.assets[].name' <<<"$release_json" | LC_ALL=C sort)"
+            test "$actual_assets" = "$expected_assets"
+            exit 0
+          fi
+          if [[ -z "$release_json" ]]; then
+            release_json="$(gh api --method POST "repos/${GITHUB_REPOSITORY}/releases" \
+              -f tag_name="$GITHUB_REF_NAME" \
+              -f name="Polaris CLI ${GITHUB_REF_NAME}" \
+              -f body="Official stable Polaris CLI release ${GITHUB_REF_NAME}." \
+              -F draft=true \
+              -F prerelease=false)"
+          fi
+          release_id="$(jq -r .id <<<"$release_json")"
+          while read -r asset_id; do
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/releases/assets/${asset_id}"
+          done < <(jq -r '.assets[].id' <<<"$release_json")
+          for file in release/*; do
+            name="$(basename "$file")"
+            gh api --method POST \
+              -H "Content-Type: application/octet-stream" \
+              --input "$file" \
+              "repos/${GITHUB_REPOSITORY}/releases/${release_id}/assets?name=${name}" >/dev/null
+          done
+          release_json="$(gh api "repos/${GITHUB_REPOSITORY}/releases/${release_id}")"
+          actual_assets="$(jq -r '.assets[].name' <<<"$release_json" | LC_ALL=C sort)"
+          test "$actual_assets" = "$expected_assets"
+          gh api --method PATCH "repos/${GITHUB_REPOSITORY}/releases/${release_id}" \
+            -F draft=false \
+            -f make_latest=true >/dev/null
