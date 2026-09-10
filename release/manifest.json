@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "version": "0.1.3",
+  "commit": "56051cfda2ea79f574506904d928a5961e460b91",
+  "published_at": "2026-09-10T14:08:05.000Z",
+  "assets": [
+    {
+      "os": "darwin",
+      "arch": "amd64",
+      "url": "https://github.com/plrs-sh/polaris-cli/releases/download/v0.1.3/polaris_darwin_amd64.tar.gz",
+      "sha256": "db2fef0a84c5446d7066c627c4711d0b88d575f2ef9ec8af71621024c94f04c6"
+    },
+    {
+      "os": "darwin",
+      "arch": "arm64",
+      "url": "https://github.com/plrs-sh/polaris-cli/releases/download/v0.1.3/polaris_darwin_arm64.tar.gz",
+      "sha256": "4dcb78fa722dece69a9da2539dffef0be61f4c312a2f5c1c4a2a2985b3dd3ebd"
+    },
+    {
+      "os": "linux",
+      "arch": "amd64",
+      "url": "https://github.com/plrs-sh/polaris-cli/releases/download/v0.1.3/polaris_linux_amd64.tar.gz",
+      "sha256": "f258709b2275c421b17e09246cc3020565a7a62674851ed207d9775dbf41d685"
+    },
+    {
+      "os": "linux",
+      "arch": "arm64",
+      "url": "https://github.com/plrs-sh/polaris-cli/releases/download/v0.1.3/polaris_linux_arm64.tar.gz",
+      "sha256": "3ee8fee9203e9fea6fffb75c4f72e39bce22b0f091a388a8263b1831a6fa2515"
+    }
+  ]
+}
